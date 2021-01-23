@@ -1,38 +1,57 @@
-import { scss } from './styles/main.scss';
-import { templateCommentsList } from './files_js/templateCommentsList';
-import { templateModal } from './files_js/templateModal';
-import { templatePost } from './files_js/templatePost';
+import _ from 'lodash';
+
 import { render } from './files_js/render';
-import { renderPosts } from './files_js/renderPosts';
+import { renderPostsList } from './files_js/renderPostsList';
 import { closeModal } from './files_js/closeModal';
 
+import modalTemplate from './templates/modal.html';
+import postsListTemplate from './templates/postsList.html'
+import inputTemplate from './templates/input.html'
 
 
 const fetchPostsResult = fetch('https://jsonplaceholder.typicode.com/posts');
 
 let posts;
-
-
-// const renderPosts = (data) => {
-//     const markup = templatePostsList(data);
-//     render(markup)
-// };
+let post;
 
 fetchPostsResult.then(response => response.json()).then(data => {
-    renderPosts(data);
+
     posts = data;
+    const inputTempate = _.template(inputTemplate)({});
+    render(inputTempate);
+
+    const postsList = _.template(postsListTemplate)({
+        posts
+    });
+    renderPostsList(postsList);
+  
+    const input = document.getElementById('inputPosts');
+    input.addEventListener('input', filterPosts);
+
+    function filterPosts(e) {
+
+        const somePosts = posts.filter(post => post.title.includes(e.target.value));
+        const postsSelector = document.querySelector(".posts-list");
+        postsSelector.remove();
+
+        const somePostsList = _.template(postsListTemplate)({
+            posts: somePosts
+        });
+        renderPostsList(somePostsList);
+    }
 
     document.querySelectorAll(".post").forEach(item => {
         item.addEventListener("click", (event) => {
             const postId = +event.target.dataset.id;
-            const post = posts.find(post => postId === post.id);
+            post = posts.find(post => postId === post.id);
 
             fetch(`https://jsonplaceholder.typicode.com/posts/${postId}/comments`).then(response => response.json())
-            .then(dataComments => {
-                const modalMarkup = templateModal(templatePost(post),
-                templateCommentsList(dataComments));
+            .then(comments => {
+                const modalMarkup = _.template(modalTemplate)({
+                    post, comments
+                });
                 render(modalMarkup);
-
+                
                 const modal = document.querySelector(".modal");
                 const overlay = document.querySelector(".overlay");
 
@@ -51,59 +70,8 @@ fetchPostsResult.then(response => response.json()).then(data => {
                 })
             })
             .catch(error => {
-                alert(`Что-то пошло не так ${error}`);
+                alert(`Что-то пошло не так. ${error}`);
             })
         })
     });
 });
-
-
-// const closeModal = () => {
-//     const modal = document.querySelector(".modal");
-//     const overlay = document.querySelector(".overlay");
-
-//     modal.remove();
-//     overlay.remove();
-// };
-
-// const templatePost = (post) => 
-//     `<div class="post" data-id=${post.id}>
-//         <h4 class="post__title">${post.title}</h4>
-//         <p class="post__body">${post.body}</p>
-//     </div>`
-// ;
-
-// const templatePostsList = (data) => data.map(templatePost).join("");
-
-
-// const render = (markup) => {
-//     const root = document.getElementById('root');
-//     const div = document.createElement('div');
-//     div.innerHTML = markup;
-
-//     root.append(div); 
-// };
-
-// const templateCommentsList = (dataComments) => dataComments.map(comment => 
-//     `<div class="comment">
-//         <p class="comment__name">Name: ${comment.name}</p>
-//         <p class="comment__email">Email: ${comment.email}</p>
-//     </div>`
-// ).join("");
-
-
-// const templateModal = (postMarkup, commentsMarkup) => 
-//     `<div class="overlay"></div>
-//     <div class="modal">
-//         <div class="modal-content">
-//             <div class="modal-header">
-//                 <button class="close">close</button>
-//             </div>
-//             <div class="modal-body">
-//                 ${postMarkup}
-//                 ${commentsMarkup}
-//             </div>
-//         </div>
-//     </div>`
-// ;
-

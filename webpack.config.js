@@ -34,11 +34,10 @@ module.exports = {
                 exclude: /node_modules/,
                 use: ['babel-loader'],
             },
-
             {
-                test: /\.(scss|css)$/,
-                use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
-            },
+                test: /\.html$/i,
+                use: 'raw-loader',
+              },
         ],
     }
 }
